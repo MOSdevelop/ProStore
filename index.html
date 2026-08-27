@@ -326,6 +326,24 @@
             box-shadow: 0 8px 24px rgba(0, 113, 227, 0.4);
         }
 
+        .btn-delete {
+            width: 100%;
+            background: transparent;
+            color: #FF5E3A;
+            border: 1px solid #FF5E3A;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+        }
+
+        .btn-delete:hover {
+            background: rgba(255, 94, 58, 0.1);
+        }
+
         /* Featured Section */
         .featured-carousel {
             display: grid;
@@ -396,9 +414,137 @@
             opacity: 0.3;
         }
 
-        @media (max-width: 1024px) {
-            .apps-grid {
-                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(5px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-light);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            backdrop-filter: blur(20px);
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        input, textarea {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        input:focus, textarea:focus {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-primary {
+            flex: 1;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 113, 227, 0.3);
+        }
+
+        .btn-secondary {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--glass);
+            border: 1px solid rgba(0, 113, 227, 0.5);
+            border-radius: 12px;
+            padding: 16px 24px;
+            color: var(--text-primary);
+            backdrop-filter: blur(20px);
+            z-index: 300;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
             }
         }
     </style>
@@ -410,7 +556,7 @@
         <div class="sidebar-nav">
             <button class="nav-item active" onclick="showSection('today')">📅</button>
             <button class="nav-item" onclick="showSection('apps')">🎮</button>
-            <button class="nav-item" onclick="showSection('collections')">🏆</button>
+            <button class="nav-item" onclick="showSection('my-apps')">📦</button>
             <button class="nav-item" onclick="showSection('categories')">🏷️</button>
         </div>
     </div>
@@ -423,7 +569,7 @@
                 <input type="text" class="search-input" id="searchInput" placeholder="Zoeken naar apps...">
             </div>
             <div class="topbar-actions">
-                <button class="btn-ghost">+ App Toevoegen</button>
+                <button class="btn-ghost" onclick="openAddAppModal()">+ App Toevoegen</button>
                 <button class="btn-ghost">👤 Account</button>
             </div>
         </div>
@@ -434,7 +580,7 @@
             <div id="today-section">
                 <div class="section-header">
                     <h1 class="section-title">Vandaag</h1>
-                    <p class="section-subtitle">Ontdek de beste apps van vandaag</p>
+                    <p class="section-subtitle">Ontdek de beste apps</p>
                 </div>
 
                 <!-- Featured -->
@@ -458,11 +604,55 @@
                 </div>
                 <div class="apps-grid" id="allApps"></div>
             </div>
+
+            <!-- My Apps Section -->
+            <div id="my-apps-section" style="display: none;">
+                <div class="section-header">
+                    <h1 class="section-title">Mijn Apps</h1>
+                    <p class="section-subtitle">Apps die je hebt toegevoegd</p>
+                </div>
+                <div class="apps-grid" id="myApps"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add App Modal -->
+    <div class="modal" id="addAppModal">
+        <div class="modal-content">
+            <div class="modal-header">➕ App Toevoegen</div>
+            <div class="form-group">
+                <label>App Naam *</label>
+                <input type="text" id="appName" placeholder="Bijv: Mijn Cool App">
+            </div>
+            <div class="form-group">
+                <label>Beschrijving *</label>
+                <textarea id="appDescription" placeholder="Beschrijf je app..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Icon (emoji)</label>
+                <input type="text" id="appIcon" placeholder="🚀" maxlength="2">
+            </div>
+            <div class="form-group">
+                <label>Categorie</label>
+                <input type="text" id="appCategory" placeholder="Bijv: Productiviteit">
+            </div>
+            <div class="form-group">
+                <label>Download Link *</label>
+                <input type="url" id="appLink" placeholder="https://example.com/app.zip">
+            </div>
+            <div class="form-group">
+                <label>Bestandsgrootte</label>
+                <input type="text" id="appSize" placeholder="Bijv: 245 MB">
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-primary" onclick="addCustomApp()">Toevoegen</button>
+                <button class="btn-secondary" onclick="closeModal()">Annuleren</button>
+            </div>
         </div>
     </div>
 
     <script>
-        const apps = [
+        let defaultApps = [
             {
                 id: 1,
                 name: "Figma",
@@ -471,7 +661,9 @@
                 icon: "🎨",
                 rating: 4.9,
                 size: "245 MB",
-                featured: true
+                featured: true,
+                downloadUrl: "https://www.figma.com/download/",
+                custom: false
             },
             {
                 id: 2,
@@ -481,7 +673,9 @@
                 icon: "💻",
                 rating: 4.8,
                 size: "156 MB",
-                featured: true
+                featured: true,
+                downloadUrl: "https://code.visualstudio.com/download",
+                custom: false
             },
             {
                 id: 3,
@@ -491,7 +685,9 @@
                 icon: "🎵",
                 rating: 4.7,
                 size: "487 MB",
-                featured: true
+                featured: true,
+                downloadUrl: "https://www.spotify.com/download/",
+                custom: false
             },
             {
                 id: 4,
@@ -500,7 +696,9 @@
                 description: "Professionele design tools",
                 icon: "🖌️",
                 rating: 4.6,
-                size: "2.4 GB"
+                size: "2.4 GB",
+                downloadUrl: "https://www.adobe.com/downloads/",
+                custom: false
             },
             {
                 id: 5,
@@ -509,7 +707,9 @@
                 description: "Professioneel video editing",
                 icon: "🎬",
                 rating: 4.8,
-                size: "1.2 GB"
+                size: "1.2 GB",
+                downloadUrl: "https://apps.apple.com/app/final-cut-pro/id412113343",
+                custom: false
             },
             {
                 id: 6,
@@ -518,7 +718,9 @@
                 description: "Professionele DAW voor muziek",
                 icon: "🎹",
                 rating: 4.7,
-                size: "892 MB"
+                size: "892 MB",
+                downloadUrl: "https://apps.apple.com/app/logic-pro/id634148309",
+                custom: false
             },
             {
                 id: 7,
@@ -527,7 +729,9 @@
                 description: "All-in-one werkruimte",
                 icon: "📝",
                 rating: 4.6,
-                size: "324 MB"
+                size: "324 MB",
+                downloadUrl: "https://www.notion.so/download",
+                custom: false
             },
             {
                 id: 8,
@@ -536,7 +740,9 @@
                 description: "Team communication platform",
                 icon: "💬",
                 rating: 4.5,
-                size: "267 MB"
+                size: "267 MB",
+                downloadUrl: "https://slack.com/downloads/",
+                custom: false
             },
             {
                 id: 9,
@@ -545,7 +751,9 @@
                 description: "Git client voor developers",
                 icon: "🐙",
                 rating: 4.4,
-                size: "182 MB"
+                size: "182 MB",
+                downloadUrl: "https://desktop.github.com/",
+                custom: false
             },
             {
                 id: 10,
@@ -554,7 +762,9 @@
                 description: "Digital design platform",
                 icon: "✏️",
                 rating: 4.7,
-                size: "523 MB"
+                size: "523 MB",
+                downloadUrl: "https://www.sketch.com/downloads/",
+                custom: false
             },
             {
                 id: 11,
@@ -563,7 +773,9 @@
                 description: "IDE voor Apple development",
                 icon: "🛠️",
                 rating: 4.3,
-                size: "12.4 GB"
+                size: "12.4 GB",
+                downloadUrl: "https://developer.apple.com/download/",
+                custom: false
             },
             {
                 id: 12,
@@ -572,9 +784,15 @@
                 description: "Video conferencing platform",
                 icon: "📹",
                 rating: 4.2,
-                size: "412 MB"
+                size: "412 MB",
+                downloadUrl: "https://zoom.us/download",
+                custom: false
             }
         ];
+
+        let allApps = [...defaultApps];
+        let customApps = JSON.parse(localStorage.getItem('customApps')) || [];
+        allApps = [...allApps, ...customApps];
 
         function renderStars(rating) {
             let stars = '';
@@ -586,21 +804,24 @@
 
         function renderAppCard(app) {
             return `
-                <div class="app-item" onclick="downloadApp('${app.name}')">
+                <div class="app-item">
                     <div class="app-icon">${app.icon}</div>
                     <div class="app-category">${app.category}</div>
                     <div class="app-name">${app.name}</div>
                     <div class="app-description">${app.description}</div>
-                    <div class="app-rating"><span class="star">${renderStars(app.rating)}</span> ${app.rating}</div>
+                    <div class="app-rating"><span class="star">${renderStars(app.rating || 4.5)}</span> ${app.rating || 4.5}</div>
                     <div class="app-size">${app.size}</div>
-                    <button class="btn-download">↓ Krijgen</button>
+                    <button class="btn-download" onclick="downloadApp('${app.name}', '${app.downloadUrl}')">
+                        ↓ Download
+                    </button>
+                    ${app.custom ? `<button class="btn-delete" onclick="deleteCustomApp(${app.id})">🗑️ Verwijderen</button>` : ''}
                 </div>
             `;
         }
 
         function renderFeaturedItem(app) {
             return `
-                <div class="featured-item" onclick="downloadApp('${app.name}')">
+                <div class="featured-item" onclick="downloadApp('${app.name}', '${app.downloadUrl}')">
                     <div class="featured-content">
                         <div class="featured-category">${app.category}</div>
                         <div class="featured-title">${app.name}</div>
@@ -611,17 +832,98 @@
             `;
         }
 
+        function downloadApp(name, url) {
+            if (url && url.startsWith('http')) {
+                window.open(url, '_blank');
+                showToast(`📥 ${name} wordt gedownload...`);
+            } else {
+                showToast(`❌ Geen geldige download link voor ${name}`);
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function openAddAppModal() {
+            document.getElementById('addAppModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('addAppModal').classList.remove('active');
+        }
+
+        function addCustomApp() {
+            const name = document.getElementById('appName').value.trim();
+            const description = document.getElementById('appDescription').value.trim();
+            const icon = document.getElementById('appIcon').value || '📦';
+            const category = document.getElementById('appCategory').value || 'Overig';
+            const downloadUrl = document.getElementById('appLink').value.trim();
+            const size = document.getElementById('appSize').value || '0 MB';
+
+            if (!name || !description || !downloadUrl) {
+                showToast('❌ Vul alle verplichte velden in (*)');
+                return;
+            }
+
+            const newApp = {
+                id: Date.now(),
+                name,
+                description,
+                icon,
+                category,
+                downloadUrl,
+                size,
+                rating: 4.5,
+                featured: false,
+                custom: true
+            };
+
+            customApps.push(newApp);
+            localStorage.setItem('customApps', JSON.stringify(customApps));
+            allApps.push(newApp);
+
+            // Reset form
+            document.getElementById('appName').value = '';
+            document.getElementById('appDescription').value = '';
+            document.getElementById('appIcon').value = '';
+            document.getElementById('appCategory').value = '';
+            document.getElementById('appLink').value = '';
+            document.getElementById('appSize').value = '';
+
+            closeModal();
+            showToast(`✅ ${name} toegevoegd!`);
+            initializeApps();
+        }
+
+        function deleteCustomApp(id) {
+            if (confirm('Weet je zeker dat je deze app wilt verwijderen?')) {
+                customApps = customApps.filter(app => app.id !== id);
+                localStorage.setItem('customApps', JSON.stringify(customApps));
+                allApps = [...defaultApps, ...customApps];
+                showToast('🗑️ App verwijderd');
+                initializeApps();
+            }
+        }
+
         function initializeApps() {
-            const featured = apps.filter(a => a.featured);
-            const recommended = apps.slice(0, 6);
+            const featured = allApps.filter(a => a.featured);
+            const recommended = allApps.slice(0, 6);
+            const myCustomApps = customApps;
 
             document.getElementById('featured').innerHTML = featured.map(renderFeaturedItem).join('');
             document.getElementById('recommended').innerHTML = recommended.map(renderAppCard).join('');
-            document.getElementById('allApps').innerHTML = apps.map(renderAppCard).join('');
-        }
-
-        function downloadApp(name) {
-            alert(`📥 ${name} wordt nu gedownload!`);
+            document.getElementById('allApps').innerHTML = allApps.map(renderAppCard).join('');
+            
+            if (myCustomApps.length === 0) {
+                document.getElementById('myApps').innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); padding: 40px;">Geen custom apps toegevoegd. Voeg er een toe! ➕</p>';
+            } else {
+                document.getElementById('myApps').innerHTML = myCustomApps.map(renderAppCard).join('');
+            }
         }
 
         function showSection(section) {
@@ -638,11 +940,18 @@
 
         document.getElementById('searchInput').addEventListener('input', (e) => {
             const query = e.target.value.toLowerCase();
-            const filtered = apps.filter(app =>
+            const filtered = allApps.filter(app =>
                 app.name.toLowerCase().includes(query) ||
                 app.category.toLowerCase().includes(query)
             );
-            document.getElementById('recommended').innerHTML = filtered.map(renderAppCard).join('');
+            document.getElementById('recommended').innerHTML = filtered.length === 0 
+                ? '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">Geen apps gevonden</p>'
+                : filtered.map(renderAppCard).join('');
+        });
+
+        // Close modal on outside click
+        document.getElementById('addAppModal').addEventListener('click', (e) => {
+            if (e.target.id === 'addAppModal') closeModal();
         });
 
         initializeApps();
